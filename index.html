@@ -480,19 +480,23 @@
     <div class="section-label reveal">АНКЕТА ГОСТЯ</div>
     <div class="thin-line reveal"></div>
     <p class="reveal" style="text-align:center;font-family:'Jost',sans-serif;font-style:normal;font-size:0.95rem;font-weight:300;letter-spacing:0.05em;color:var(--dark);margin-bottom:0;">
-      Подтвердите присутствие до <strong style="font-weight:500;">31 августа 2026</strong>
+      Пожалуйста, подтвердите присутствие до <strong style="font-weight:500;">31 августа 2026</strong>
     </p>
     <div class="rsvp-form reveal">
       <form id="rsvpForm" novalidate>
-        <!-- ИМЯ -->
+        <!-- ИМЯ + ФАМИЛИЯ -->
         <div class="form-group">
           <label class="form-label" for="guestName">Ваше имя <span class="req">*</span></label>
-          <input class="form-input" type="text" id="guestName" placeholder="Имя и фамилия">
+          <input class="form-input" type="text" id="guestName" placeholder="Имя">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="guestLastName">Ваша фамилия <span class="req">*</span></label>
+          <input class="form-input" type="text" id="guestLastName" placeholder="Фамилия">
         </div>
 
         <!-- ПРИДЁТЕ -->
         <div class="form-group">
-          <label class="form-label">Вы придёте? <span class="req">*</span></label>
+          <label class="form-label">Сможете ли вы присоединиться к нам? <span class="req">*</span></label>
           <div class="radio-group">
             <label class="radio-opt"><input type="radio" name="attending" value="yes" id="att-yes"> С радостью буду!</label>
             <label class="radio-opt"><input type="radio" name="attending" value="no"  id="att-no"> К сожалению, не смогу</label>
@@ -618,7 +622,11 @@ function buildExtraGuests(count) {
       <div class="extra-guest-title">Гость ${i}</div>
       <div class="form-group" style="margin-bottom:0.8rem;">
         <label class="form-label">Имя</label>
-        <input class="form-input" type="text" name="extra_name_${i}" placeholder="Имя и фамилия">
+        <input class="form-input" type="text" name="extra_name_${i}" placeholder="Имя">
+      </div>
+      <div class="form-group extra-lastname-${i}" style="margin-bottom:0.8rem;">
+        <label class="form-label">Фамилия</label>
+        <input class="form-input" type="text" name="extra_lastname_${i}" placeholder="Фамилия">
       </div>
       <div class="form-group" style="margin-bottom:0.8rem;">
         <label class="form-label">Кто это?</label>
@@ -638,6 +646,11 @@ function toggleAlcohol(idx, show) {
   const wrap = document.getElementById('alc-wrap-' + idx);
   if (!wrap) return;
   wrap.innerHTML = show ? alcoholBlock(idx) : '';
+  // Show/hide last name field
+  const lastnameGroup = document.querySelector('.extra-lastname-' + idx);
+  if (lastnameGroup) {
+    lastnameGroup.style.display = show ? 'block' : 'none';
+  }
 }
 
 guestCount.addEventListener('change', () => {
@@ -646,9 +659,10 @@ guestCount.addEventListener('change', () => {
 });
 
 function checkValid() {
-  const nameOk    = document.getElementById('guestName').value.trim() !== '';
-  const attending = document.querySelector('input[name="attending"]:checked');
-  if (!attending || !nameOk) { submitBtn.disabled = true; return; }
+  const nameOk     = document.getElementById('guestName').value.trim() !== '';
+  const lastNameOk = document.getElementById('guestLastName').value.trim() !== '';
+  const attending  = document.querySelector('input[name="attending"]:checked');
+  if (!attending || !nameOk || !lastNameOk) { submitBtn.disabled = true; return; }
   if (attending.value === 'no') { submitBtn.disabled = false; return; }
   const alcoholOk = document.querySelectorAll('input[name="alcohol_1"]:checked').length > 0;
   const transferOk= transferSel.value !== '';
@@ -680,7 +694,7 @@ form.addEventListener('submit', async function(e) {
   // Guest 1 (main)
   const alc1 = Array.from(document.querySelectorAll('input[name="alcohol_1"]:checked')).map(c=>c.value).join(', ');
   rows.push({
-    name:       document.getElementById('guestName').value,
+    name:       document.getElementById('guestName').value + ' ' + document.getElementById('guestLastName').value,
     attending:  attending === 'yes' ? 'Да' : 'Нет',
     type:       'Основной гость',
     alcohol:    alc1,
@@ -693,10 +707,11 @@ form.addEventListener('submit', async function(e) {
   if (attending === 'yes') {
     for (let i = 2; i <= count; i++) {
       const name = form.querySelector(`[name="extra_name_${i}"]`)?.value || '';
+      const lastName = form.querySelector(`[name="extra_lastname_${i}"]`)?.value || '';
       const type = form.querySelector(`input[name="extra_type_${i}"]:checked`)?.value || '';
       const alcChecked = Array.from(form.querySelectorAll(`input[name="alcohol_${i}"]:checked`)).map(c=>c.value).join(', ');
       rows.push({
-        name:       name,
+        name:       name + (lastName ? ' ' + lastName : ''),
         attending:  'Да',
         type:       type,
         alcohol:    alcChecked,
